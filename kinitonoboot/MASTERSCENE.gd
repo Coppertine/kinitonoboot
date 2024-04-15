@@ -14,7 +14,10 @@ var config = {
 	"PLAYER_BIRTHDAY": false,
 	"GAME_SPEED": false
 }
+var VERSION = "2.0.1"
+
 var config_loaded = false
+var config_mod_version_min = "1.1"
 
 func _ready():
 	config_handler()
@@ -30,12 +33,24 @@ func config_handler():
 		while config_loaded == false:
 			if get_parent().has_node("Config_Scene"):
 				var config_node = get_parent().get_node("Config_Scene")
-				var config_file = config_node.MakeConfig("kinitonoboot",config)
-				config = config_node.values
+				if config_node.VERSION == null or (config_node.VERSION.replace("VER:","") > config_mod_version_min):
+					var curr_version = "not found"
+					if config_node.VERSION != null:
+						config_node.VERSION.replace("VER:","")
+					OS.alert("Outdated ModConfiguration\n\nRequired Version: " + str(config_mod_version_min) + "+\n\nSee godot.log for details", "kinitonoboot")
+					print("[no-boot] Outdated ModConfiguration mod found, please install the required version or above to be able to configurate this mod.")
+					print("[no-boot] Required Version: " + str(config_mod_version_min) + "+")
+					print("[no-boot] Current ModConfiguration Version: " + curr_version)
+					print("[no-boot] Download latest release: https://github.com/reckdave/Mod-Configuration")
+					config_loaded = true
+				config = config_node.MakeConfig("kinitonoboot",config).Config_Values
 				config_loaded = true
 			yield(get_tree().create_timer(0.1,false),"timeout")
 	else:
-		print("[no-boot] Can not find Mod Configuration, using default settings")
+		OS.alert("ModConfiguration mod is not found\nIf you want to change where this mod redirects you to, use ModConfiguration:\nhttps://github.com/reckdave/Mod-Configuration","kinitonoboot")
+		print("[no-boot] Can not find ModConfiguration, using default settings")
+		print("[no-boot] If you want to change where this mod redirects you to, use ModConfiguration:")
+		print("[no-boot] https://github.com/reckdave/Mod-Configuration")
 		config_loaded = true
 	pass
 
@@ -85,6 +100,7 @@ func desktop_boot():
 	
 func funfair_boot():
 	print("[no-boot] detected boot screen, starting your_world")
+	print("[no-boot] Note: Kinito is not loaded into the game, therefore, you can not progress further than the funfair")
 	ran_no_boot = true # we don't want to run this any more than once..
 	get_parent().get_parent().get_node("0/NROOT/Aspect/Sprite").visible = false
 	Tab.set_window_position(0, Vector2(0,0))
@@ -105,6 +121,12 @@ func funfair_boot():
 	
 func your_home_boot():
 	print("[no-boot] detected boot screen, starting your_world")
+	print("[no-boot] Note: Kinito is not loaded into the game, therefore, you can not progress into the KinitoPET endings from the house")
+	if !App.recording:
+		OS.alert("Streamer Mode is NOT ENABLED, please enable it next time you launch this game with BOOT_TO set to 'your_home'\n\nPlease refer to the godot.log file for additional details","Kinitonoboot")
+		print("[no-boot] WARNING: Streamer Mode is NOT ENABLED, please enable it next time you launch this game with BOOT_TO set to your_home")
+		print("[no-boot] WARNING: If 'Kinito' turns off your monitor, you closed the game and are unable to relaunch the game, please use Task Manager to turn off Steam, relaunch Steam and then force turn off KinitoPET from Steam.")
+	
 	ran_no_boot = true # we don't want to run this any more than once..
 	get_parent().get_parent().get_node("0/NROOT/Aspect/Sprite").visible = false
 	Tab.set_window_position(0, Vector2(0,0))
@@ -129,7 +151,8 @@ func your_home_boot():
 	yield(get_tree().create_timer(4), "timeout")
 	App._yourworldData("FUNFAIR_CoasterStart")
 	# Here, we set the config values...
-	yield(get_tree().create_timer(29), "timeout") # it takes 30 seconds for the coaster to do it's thing and an extra 10 seconds for it to enter into the world
+	yield(get_tree().create_timer(29), "timeout") # it takes 30 seconds for the coaster 
+	# to do it's thing and an extra 10 seconds for it to enter into the world
 	_set_house_vars()
 	# You will have to wait like 30 seconds for the coaster to run in the background...
 	print("[no-boot] world type: " + Vars.get("HOUSE_world"))
@@ -139,9 +162,7 @@ func your_home_boot():
 
 	yield(get_tree().create_timer(1), "timeout")
 	App._yourworldData("HOUSE_Xready")
-	App.recording = true
 	yield(get_tree().create_timer(2), "timeout")
-	print("[no-boot] recording: " + str(App.recording))
 	App._yourworldData("HOUSE_houseready")
 	yield(get_tree().create_timer(10.0), "timeout")
 	pass
@@ -180,6 +201,7 @@ func _set_house_vars():
 
 class Colour:
 	const RED = "Red"
+	const BLUE = "Blue"
 	
 class WORLD_TYPE:
 	const FIELD = "Field"
