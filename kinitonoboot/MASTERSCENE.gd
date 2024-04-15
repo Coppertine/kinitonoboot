@@ -86,13 +86,13 @@ func desktop_boot():
 	if App.data["dskhide"] == 0:
 		Desktop.ToggleDesktopIcons()
 	yield(get_tree().create_timer(0.5), "timeout")
-	print("[no-boot] Chapter = " + str(config["BOOT_CHAPTER"]))
-	if config["BOOT_CHAPTER"] == str(ScenePoints.SAVE):
+	print("[no-boot] Chapter = " + config["BOOT_CHAPTER"])
+	if config["BOOT_CHAPTER"] == ScenePoints.SAVE:
 		print("[no-boot] Going to saved state")
 		Tab.scene("res://-Scenes/Application000/Main/PC.tscn")
-	elif config["BOOT_CHAPTER"] != str(ScenePoints.SAVE):
+	elif config["BOOT_CHAPTER"] != ScenePoints.SAVE:
 		print("[no-boot] Selected Chapter: " + config["BOOT_CHAPTER"])
-		Data._save("sp",int(config["BOOT_CHAPTER"]))
+		Data._save("sp",config["BOOT_CHAPTER"])
 		yield(get_tree().create_timer(0.5), "timeout")
 		print("[no-boot] Saved chapter: " + Tab.sp)
 		Tab.scene("res://-Scenes/Application000/Main/PC.tscn")
