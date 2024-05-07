@@ -1,7 +1,11 @@
 extends Node
+var VERSION = "2.0.2"
+var mod_name = "kinitonoboot"
+var mod_author = "Coppertine"
 var config = {
 	"BOOT_TO": Boot_Type.PC,
 	"BOOT_CHAPTER": ScenePoints.SAVE,
+	"GAME_SPEED": false,
 	"PLAYER_NAME": "player",
 	"WORLD_TYPE": WORLD_TYPE.FIELD,
 	"WORLD_SEASON": World_Season.SUMMER,
@@ -11,39 +15,35 @@ var config = {
 	"HOUSE_SUPER": "fly anywhere",
 	"HOUSE_FOOD": "bread",
 	"HOUSE_GAME": "KinitoPET",
-	"PLAYER_BIRTHDAY": false,
-	"GAME_SPEED": false
+	"PLAYER_BIRTHDAY": false
 }
-var VERSION = "2.0.1"
 
 var config_loaded = false
-var config_mod_version_min = "1.1"
+var config_mod_version_min = "1.1.1a"
 
 func _ready():
 	config_handler()
-	print("[no-boot] KinitoNoBoot installed")
-	
+	print("[no-boot] KinitoNoBoot installed")	
 	pass
 
 func config_handler():
 	var dir = Directory.new()
 	dir.open("user://Mods")
 	if (dir.file_exists("ModConfiguration.zip")):
-
 		while config_loaded == false:
 			if get_parent().has_node("Config_Scene"):
 				var config_node = get_parent().get_node("Config_Scene")
-				if config_node.VERSION == null or (config_node.VERSION.replace("VER:","") > config_mod_version_min):
+				if config_node.VERSION == null or (config_node.VERSION < config_mod_version_min):
 					var curr_version = "not found"
 					if config_node.VERSION != null:
-						config_node.VERSION.replace("VER:","")
+						curr_version = config_node.VERSION
 					OS.alert("Outdated ModConfiguration\n\nRequired Version: " + str(config_mod_version_min) + "+\n\nSee godot.log for details", "kinitonoboot")
 					print("[no-boot] Outdated ModConfiguration mod found, please install the required version or above to be able to configurate this mod.")
 					print("[no-boot] Required Version: " + str(config_mod_version_min) + "+")
 					print("[no-boot] Current ModConfiguration Version: " + curr_version)
 					print("[no-boot] Download latest release: https://github.com/reckdave/Mod-Configuration")
 					config_loaded = true
-				config = config_node.MakeConfig("kinitonoboot",config).Config_Values
+				config = config_node.MakeConfig(mod_name,mod_author,config).ConfigValues
 				config_loaded = true
 			yield(get_tree().create_timer(0.1,false),"timeout")
 	else:
@@ -60,13 +60,13 @@ func _process(delta):
 	while !config_loaded: # _ready() has to wait up before the config is fully loaded
 		yield(get_tree().create_timer(0.1,false),"timeout")
 	if !in_pc_scene:
-		if "PC" in get_parent().get_parent().get_node("0").get_child(0).name:
+		if get_parent().get_parent().get_node("0").get_child_count() >= 1 and  "PC" in get_parent().get_parent().get_node("0").get_child(0).name:
 			in_pc_scene = true
 			if config["GAME_SPEED"] and get_parent().get_parent().get_node("0").get_child(0).has_node("Aspect/DEVCONSOL"):
 				if !get_parent().get_parent().get_node("0").get_child(0).get_node("Aspect/DEVCONSOL/LineEdit").speedTime:
 					print("[no-boot] Turning on speed mode")
 					get_parent().get_parent().get_node("0").get_child(0).get_node("Aspect/DEVCONSOL/LineEdit").speedTime = true
-	if in_pc_scene and !("PC" in get_parent().get_parent().get_node("0").get_child(0).name):
+	if in_pc_scene and get_parent().get_parent().get_node("0").get_child_count() >= 1 and !("PC" in get_parent().get_parent().get_node("0").get_child(0).name):
 		in_pc_scene = false
 	if get_parent().get_parent().has_node("0/NROOT") and !ran_no_boot:
 		if config["BOOT_TO"] == Boot_Type.PC:
@@ -125,7 +125,8 @@ func your_home_boot():
 	if !App.recording:
 		OS.alert("Streamer Mode is NOT ENABLED, please enable it next time you launch this game with BOOT_TO set to 'your_home'\n\nPlease refer to the godot.log file for additional details","Kinitonoboot")
 		print("[no-boot] WARNING: Streamer Mode is NOT ENABLED, please enable it next time you launch this game with BOOT_TO set to your_home")
-		print("[no-boot] WARNING: If 'Kinito' turns off your monitor, you closed the game and are unable to relaunch the game, please use Task Manager to turn off Steam, relaunch Steam and then force turn off KinitoPET from Steam.")
+		print("[no-boot] WARNING: If 'Kinito' turns off your monitor, you closed the game and are unable to relaunch the game")
+		print("[no-boot] WARNING:  please use Task Manager to turn off Steam, relaunch Steam and then force turn off KinitoPET from Steam before starting the game.")
 	
 	ran_no_boot = true # we don't want to run this any more than once..
 	get_parent().get_parent().get_node("0/NROOT/Aspect/Sprite").visible = false
